@@ -1611,7 +1611,7 @@ cs_audio_source_t* cs_read_mem_wav(const void* memory, size_t size, cs_error_t* 
 		data = (const uint8_t*)cs_next((char*)data);
 	}
 	uint32_t fmt_size = *(uint32_t*)(data + 4);
-	if (end - data < 8 + fmt_size || fmt_size < 16) CS_WAV_FAIL(CUTE_SOUND_ERROR_WAV_FILE_FORMAT_CHUNK_NOT_FOUND);
+	if (fmt_size < 16 || (uint64_t)8 + fmt_size > (uint64_t)(end - data)) CS_WAV_FAIL(CUTE_SOUND_ERROR_WAV_FILE_FORMAT_CHUNK_NOT_FOUND);
 
 	// Parse fmt chunk.
 	uint16_t format_tag = *(uint16_t*)(data + 8);
@@ -1657,6 +1657,7 @@ cs_audio_source_t* cs_read_mem_wav(const void* memory, size_t size, cs_error_t* 
 	// Calculate sample count.
 	int64_t frame_size = channels * bytes_per_sample;
 	int64_t sample_count = data_size / frame_size;
+	if (sample_count <= 0) CS_WAV_FAIL(CUTE_SOUND_ERROR_WAV_DATA_CHUNK_NOT_FOUND);
 
 	// Allocate audio source.
 	cs_audio_source_t* audio = (cs_audio_source_t*)CUTE_SOUND_ALLOC(sizeof(cs_audio_source_t), s_mem_ctx);
